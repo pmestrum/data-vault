@@ -3,12 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { RecordsService } from './records.service';
 import { RecordsController } from './records.controller';
 import { DataRecord, RecordSchema } from './schemas/record.schema';
-import { AppsModule } from '../apps/apps.module';
+import { DatabasesModule } from '../apps/databasesModule';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: DataRecord.name, schema: RecordSchema }]),
-    AppsModule, // provides App model for ApiTokenGuard
+    DatabasesModule, // provides Database model for ApiTokenGuard
   ],
   providers: [RecordsService],
   controllers: [RecordsController],

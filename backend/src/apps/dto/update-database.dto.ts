@@ -1,9 +1,10 @@
 import { IsOptional, IsString, MinLength } from 'class-validator';
 
-export class CreateAppDto {
+export class UpdateDatabaseDto {
+  @IsOptional()
   @IsString()
   @MinLength(2)
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()

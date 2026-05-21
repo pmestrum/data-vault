@@ -9,7 +9,7 @@ export class DataRecord {
   id: string;
 
   @Prop({ required: true, index: true })
-  appId: string;
+  databaseId: string;
 
   @Prop({ required: true, index: true })
   tableId: string;
@@ -27,5 +27,5 @@ export class DataRecord {
 export const RecordSchema = SchemaFactory.createForClass(DataRecord);
 
 // Record id is the primary key within an app.
-RecordSchema.index({ appId: 1, id: 1 }, { unique: true });
+RecordSchema.index({ databaseId: 1, id: 1 }, { unique: true });
 

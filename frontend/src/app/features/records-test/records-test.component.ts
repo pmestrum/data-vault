@@ -18,7 +18,7 @@ interface RequestPreview {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   url: string;
   headers: {
-    'x-app-id': string;
+    'x-database-id': string;
     'x-api-token': string;
   };
   params?: Record<string, string>;
@@ -33,9 +33,9 @@ interface RequestPreview {
   styleUrl: './records-test.component.css',
 })
 export class RecordsTestComponent {
-  appId = '';
+  databaseId = '';
   apiToken = '';
-  appIdReadonly = false;
+  databaseIdReadonly = false;
   apiTokenReadonly = false;
 
   createId = '';
@@ -64,12 +64,12 @@ export class RecordsTestComponent {
 
   constructor(private recordsApi: RecordsApiService, private route: ActivatedRoute) {
     this.route.queryParamMap.subscribe((params) => {
-      const appId = params.get('appId');
+      const databaseId = params.get('databaseId');
       const apiToken = params.get('apiToken');
 
-      if (appId) {
-        this.appId = appId;
-        this.appIdReadonly = true;
+      if (databaseId) {
+        this.databaseId = databaseId;
+        this.databaseIdReadonly = true;
       }
       if (apiToken) {
         this.apiToken = apiToken;
@@ -266,12 +266,12 @@ export class RecordsTestComponent {
   }
 
   private getHeaders(): RecordHeaders | null {
-    if (!this.appId || !this.apiToken) {
-      this.error.set('x-app-id and x-api-token are required');
+    if (!this.databaseId || !this.apiToken) {
+      this.error.set('x-database-id and x-api-token are required');
       return null;
     }
     this.error.set('');
-    return { appId: this.appId, apiToken: this.apiToken };
+    return { databaseId: this.databaseId, apiToken: this.apiToken };
   }
 
   private parseJson(raw: string): Record<string, any> | null {
@@ -313,7 +313,7 @@ export class RecordsTestComponent {
 
   private toRequestHeaders(headers: RecordHeaders): RequestPreview['headers'] {
     return {
-      'x-app-id': headers.appId,
+      'x-database-id': headers.databaseId,
       'x-api-token': headers.apiToken,
     };
   }

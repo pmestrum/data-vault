@@ -4,7 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { AppsModule } from './apps/apps.module';
+import { DatabasesModule } from './apps/databasesModule';
 import { RecordsModule } from './records/records.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
@@ -14,7 +14,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     MongooseModule.forRoot(process.env.MONGO_URI ?? 'mongodb://localhost:27017/datavault'),
     UsersModule,
     AuthModule,
-    AppsModule,
+    DatabasesModule,
     RecordsModule,
   ],
   providers: [

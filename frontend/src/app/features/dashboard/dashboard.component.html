@@ -1,10 +1,10 @@
 <div class="page-header">
-  <h1>Registered Apps</h1>
-  <p>Each app gets a unique API token for record access.</p>
+  <h1>Registered databases</h1>
+  <p>Each database gets a unique API token for record access.</p>
 </div>
 
 <div class="card dashboard-create-card">
-  <h2 class="section-title">Create New App</h2>
+  <h2 class="section-title">Create New database</h2>
 
   @if (createError) {
     <div class="alert alert-error">{{ createError }}</div>
@@ -13,9 +13,9 @@
     <div class="alert alert-success">{{ createSuccess }}</div>
   }
 
-  <form [formGroup]="createForm" (ngSubmit)="createApp()" class="create-form">
+  <form [formGroup]="createForm" (ngSubmit)="createDatabase()" class="create-form">
     <div class="create-name-field">
-      <input class="form-control" formControlName="name" type="text" placeholder="App name (e.g. my-service)" />
+      <input class="form-control" formControlName="name" type="text" placeholder="Database name (e.g. my-service)" />
     </div>
     <div class="create-description-field">
       <input class="form-control" formControlName="description" type="text" placeholder="Description (optional)" />
@@ -28,52 +28,72 @@
 
 @if (loading()) {
   <p class="text-muted">Loading apps…</p>
-} @else if (apps().length === 0) {
+} @else if (databases().length === 0) {
   <div class="card empty-apps-card">
     No apps yet. Create your first app above.
   </div>
 } @else {
-  @for (app of apps(); track app._id) {
+  @for (database of databases(); track database._id) {
     <div class="card app-card">
       <div class="flex items-center justify-between app-header-row">
         <div>
-          <span class="app-name">{{ app.name }}</span>
-          <span class="badge app-badge">App</span>
-          @if (app.description) {
-            <span class="text-muted text-sm app-description">— {{ app.description }}</span>
-          }
+          <span class="database-name">{{ database.name }}</span>
+          <span class="badge database-badge">App</span>
         </div>
         <div class="flex gap-2">
-          <button class="btn btn-ghost btn-sm" (click)="goToRecordsTest(app._id)" [disabled]="testing() === app._id">
-            {{ testing() === app._id ? 'Opening…' : 'Test' }}
+          <button class="btn btn-ghost btn-sm" (click)="goToRecordsTest(database._id)" [disabled]="testing() === database._id">
+            {{ testing() === database._id ? 'Opening…' : 'Test' }}
           </button>
-          <button class="btn btn-ghost btn-sm" (click)="toggleToken(app._id)">
-            {{ visibleToken() === app._id ? 'Hide Token' : 'Show Token' }}
+          <button class="btn btn-ghost btn-sm" (click)="toggleToken(database._id)">
+            {{ visibleToken() === database._id ? 'Hide Token' : 'Show Token' }}
           </button>
-          <button class="btn btn-danger btn-sm" (click)="deleteApp(app._id)" [disabled]="deleting === app._id">
-            {{ deleting === app._id ? '…' : 'Delete' }}
+          <button class="btn btn-danger btn-sm" (click)="deleteDatabase(database._id)" [disabled]="deleting === database._id">
+            {{ deleting === database._id ? '…' : 'Delete' }}
           </button>
         </div>
       </div>
 
+      @if (editingDescriptionFor() === database._id) {
+        <div class="flex gap-2 items-center description-row">
+          <input
+            class="form-control"
+            [value]="descriptionDraft"
+            (input)="descriptionDraft = $any($event.target).value"
+            placeholder="Description (optional)"
+          />
+          <button class="btn btn-primary btn-sm" (click)="saveDescription(database._id)" [disabled]="saveDescriptionFor() === database._id">
+            {{ saveDescriptionFor() === database._id ? 'Saving…' : 'Save' }}
+          </button>
+          <button class="btn btn-ghost btn-sm" (click)="cancelEditDescription()">Cancel</button>
+        </div>
+      } @else {
+        <div class="flex items-center justify-between description-row">
+          <p class="text-muted app-description-text">{{ database.description || 'No description added.' }}</p>
+          <button class="btn btn-ghost btn-sm" (click)="startEditDescription(database)">Edit</button>
+        </div>
+      }
+
       <div class="text-muted text-sm">
-        ID: <span class="font-mono">{{ app._id }}</span>
-        &nbsp;·&nbsp;Created {{ app.createdAt | date:'medium' }}
+        ID: <span class="font-mono">{{ database._id }}</span>
+        &nbsp;·&nbsp;Created {{ database.createdAt | date:'medium' }}
       </div>
 
-      @if (visibleToken() === app._id) {
+      @if (visibleToken() === database._id) {
         <div class="token-section">
-          @if (tokenLoading()) {
+          @if (tokenLoadingFor() === database._id) {
             <p class="text-muted text-sm">Fetching token…</p>
           } @else {
             <div class="flex gap-2 items-center token-row">
-              <div class="token-box token-value">{{ tokenMap()[app._id] || '—' }}</div>
-              <button class="btn btn-ghost btn-sm" (click)="copyToken(app._id)">
-                {{ copied() === app._id ? '✓ Copied' : 'Copy' }}
+              <div class="token-box token-value">{{ tokenMap()[database._id] || '—' }}</div>
+              <button class="btn btn-ghost btn-sm" (click)="copyToken(database._id)">
+                {{ copied() === database._id ? '✓ Copied' : 'Copy' }}
+              </button>
+              <button class="btn btn-ghost btn-sm" (click)="refreshToken(database._id)" [disabled]="refreshingTokenFor() === database._id">
+                {{ refreshingTokenFor() === database._id ? 'Refreshing…' : 'Refresh Token' }}
               </button>
             </div>
             <p class="text-muted token-hint">
-              Use as <code>x-api-token</code> header · App ID goes in <code>x-app-id</code>
+              Use as <code>x-api-token</code> header · Database ID goes in <code>x-database-id</code>
             </p>
           }
         </div>

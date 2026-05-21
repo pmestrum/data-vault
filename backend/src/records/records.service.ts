@@ -40,20 +40,20 @@ interface SortCondition {
 export class RecordsService {
   constructor(@InjectModel(DataRecord.name) private recordModel: Model<RecordDocument>) {}
 
-  async create(appId: string, dto: CreateRecordDto): Promise<RecordDocument> {
-    const record = new this.recordModel({ ...dto, id: dto.id ?? randomUUID(), appId });
+  async create(databaseId: string, dto: CreateRecordDto): Promise<RecordDocument> {
+    const record = new this.recordModel({ ...dto, id: dto.id ?? randomUUID(), databaseId: databaseId });
     try {
       return await record.save();
     } catch (error: any) {
       if (error?.code === 11000) {
-        throw new ConflictException('Record id already exists for this app');
+        throw new ConflictException('Record id already exists for this database');
       }
       throw error;
     }
   }
 
-  async query(appId: string, query: QueryRecordsDto): Promise<RecordDocument[]> {
-    const baseQuery: FilterQuery<DataRecord> = { appId };
+  async query(databaseId: string, query: QueryRecordsDto): Promise<RecordDocument[]> {
+    const baseQuery: FilterQuery<DataRecord> = { databaseId };
     if (query.tableId) baseQuery.tableId = query.tableId;
     if (query.createdBy) baseQuery.createdBy = query.createdBy;
 
@@ -77,35 +77,35 @@ export class RecordsService {
     return finder.exec();
   }
 
-  async findOne(appId: string, id: string): Promise<RecordDocument> {
-    const record = await this.recordModel.findOne({ id, appId }).exec();
+  async findOne(databaseId: string, id: string): Promise<RecordDocument> {
+    const record = await this.recordModel.findOne({ id, databaseId }).exec();
     if (!record) throw new NotFoundException('Record not found');
     return record;
   }
 
-  async replace(appId: string, id: string, dto: UpdateRecordDto): Promise<RecordDocument> {
+  async replace(databaseId: string, id: string, dto: UpdateRecordDto): Promise<RecordDocument> {
     const record = await this.recordModel
-      .findOneAndUpdate({ id, appId }, { $set: dto }, { new: true })
+      .findOneAndUpdate({ id, databaseId }, { $set: dto }, { new: true })
       .exec();
     if (!record) throw new NotFoundException('Record not found');
     return record;
   }
 
-  async patch(appId: string, id: string, dto: UpdateRecordDto): Promise<RecordDocument> {
-    const existing = await this.findOne(appId, id);
+  async patch(databaseId: string, id: string, dto: UpdateRecordDto): Promise<RecordDocument> {
+    const existing = await this.findOne(databaseId, id);
     const update: UpdateRecordDto = {
       ...dto,
       json: dto.json ? { ...existing.json, ...dto.json } : existing.json,
     };
     const record = await this.recordModel
-      .findOneAndUpdate({ id, appId }, { $set: update }, { new: true })
+      .findOneAndUpdate({ id, databaseId }, { $set: update }, { new: true })
       .exec();
     if (!record) throw new NotFoundException('Record not found');
     return record;
   }
 
-  async remove(appId: string, id: string): Promise<void> {
-    const result = await this.recordModel.findOneAndDelete({ id, appId }).exec();
+  async remove(databaseId: string, id: string): Promise<void> {
+    const result = await this.recordModel.findOneAndDelete({ id, databaseId }).exec();
     if (!result) throw new NotFoundException('Record not found');
   }
 

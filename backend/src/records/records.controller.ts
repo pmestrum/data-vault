@@ -27,40 +27,40 @@ export class RecordsController {
 
   @Post()
   create(@Request() req: any, @Body() dto: CreateRecordDto) {
-    return this.recordsService.create(req.appId, dto);
+    return this.recordsService.create(req.databaseId, dto);
   }
 
   @Get()
   async query(@Request() req: any, @Query() query: QueryRecordsDto) {
-    const records = await this.recordsService.query(req.appId, query);
+    const records = await this.recordsService.query(req.databaseId, query);
     return records.map((record) => this.toExternalRecord(record));
   }
 
   @Get(':id')
   async findOne(@Request() req: any, @Param('id') recordId: string) {
-    const record = await this.recordsService.findOne(req.appId, recordId);
+    const record = await this.recordsService.findOne(req.databaseId, recordId);
     return this.toExternalRecord(record);
   }
 
   private toExternalRecord(record: any) {
     const plain = record?.toObject ? record.toObject() : record;
-    const { _id, appId, __v, ...rest } = plain;
+    const { _id, databaseId, __v, ...rest } = plain;
     return rest;
   }
 
   @Put(':id')
   replace(@Request() req: any, @Param('id') recordId: string, @Body() dto: UpdateRecordDto) {
-    return this.recordsService.replace(req.appId, recordId, dto);
+    return this.recordsService.replace(req.databaseId, recordId, dto);
   }
 
   @Patch(':id')
   patch(@Request() req: any, @Param('id') recordId: string, @Body() dto: UpdateRecordDto) {
-    return this.recordsService.patch(req.appId, recordId, dto);
+    return this.recordsService.patch(req.databaseId, recordId, dto);
   }
 
   @Delete(':id')
   remove(@Request() req: any, @Param('id') recordId: string) {
-    return this.recordsService.remove(req.appId, recordId);
+    return this.recordsService.remove(req.databaseId, recordId);
   }
 }
 

@@ -4,29 +4,35 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { App, AppDocument } from '../../apps/schemas/app.schema';
+import { DatabasesService } from '../../apps/databases.service';
 
 @Injectable()
 export class ApiTokenGuard implements CanActivate {
-  constructor(@InjectModel(App.name) private appModel: Model<AppDocument>) {}
+  constructor(private readonly databasesService: DatabasesService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = request.headers['x-api-token'];
-    const appId = request.headers['x-app-id'];
+    const tokenHeader = request.headers['x-api-token'];
+    const databaseIdHeader = request.headers['x-database-id'];
 
-    if (!token || !appId) {
-      throw new UnauthorizedException('x-api-token and x-app-id headers are required');
+    const token = Array.isArray(tokenHeader) ? tokenHeader[0] : tokenHeader;
+    const databaseId = Array.isArray(databaseIdHeader) ? databaseIdHeader[0] : databaseIdHeader;
+
+    if (!token || !databaseId) {
+      throw new UnauthorizedException('x-api-token and x-database-id headers are required');
     }
 
-    const app = await this.appModel.findById(appId).exec();
-    if (!app || app.apiToken !== token) {
-      throw new UnauthorizedException('Invalid API token or app ID');
+    try {
+      const database = await this.databasesService.findByIdWithTokens(databaseId);
+      const validTokens = this.databasesService.resolveValidTokens(database);
+      if (!validTokens.includes(token)) {
+        throw new UnauthorizedException('Invalid API token or database ID');
+      }
+    } catch {
+      throw new UnauthorizedException('Invalid API token or database ID');
     }
 
-    request.appId = appId;
+    request.databaseId = databaseId;
     return true;
   }
 }

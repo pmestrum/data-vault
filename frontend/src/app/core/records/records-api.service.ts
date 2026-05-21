@@ -11,7 +11,7 @@ export interface VaultRecord {
 }
 
 export interface RecordHeaders {
-  appId: string;
+  databaseId: string;
   apiToken: string;
 }
 
@@ -99,7 +99,7 @@ export class RecordsApiService {
   private toHeaders(headers: RecordHeaders): HttpHeaders {
     return new HttpHeaders({
       'x-api-token': headers.apiToken,
-      'x-app-id': headers.appId,
+      'x-database-id': headers.databaseId,
     });
   }
 }

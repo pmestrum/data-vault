@@ -4,11 +4,15 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
-interface VaultApp {
+interface VaultDatabase {
   _id: string;
   name: string;
   description?: string;
   createdAt: string;
+}
+
+interface TokenResponse {
+  apiToken: string;
 }
 
 @Component({
@@ -19,17 +23,21 @@ interface VaultApp {
   styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent implements OnInit {
-  apps = signal<VaultApp[]>([]);
+  databases = signal<VaultDatabase[]>([]);
   loading = signal(true);
   visibleToken = signal<string | null>(null);
   tokenMap = signal<Record<string, string>>({});
-  tokenLoading = signal(false);
+  tokenLoadingFor = signal<string | null>(null);
+  refreshingTokenFor = signal<string | null>(null);
   copied = signal<string | null>(null);
+  editingDescriptionFor = signal<string | null>(null);
+  saveDescriptionFor = signal<string | null>(null);
   testing = signal<string | null>(null);
   deleting: string | null = null;
   creating = false;
   createError = '';
   createSuccess = '';
+  descriptionDraft = '';
 
   createForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -44,88 +52,176 @@ export class DashboardComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    this.http.get<VaultApp[]>('/api/apps').subscribe({
-      next: (apps) => { this.apps.set(apps); this.loading.set(false); },
+    this.http.get<VaultDatabase[]>('/api/databases').subscribe({
+      next: (databases) => {
+        this.databases.set(databases);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }
 
-  createApp(): void {
+  createDatabase(): void {
     if (this.createForm.invalid) return;
     this.creating = true;
     this.createError = '';
     this.createSuccess = '';
     const { name, description } = this.createForm.getRawValue();
-    this.http.post<VaultApp>('/api/apps', { name, description }).subscribe({
-      next: (app) => {
-        this.apps.update((list) => [app, ...list]);
+    this.http.post<VaultDatabase>('/api/databases', { name, description }).subscribe({
+      next: (database) => {
+        this.databases.update((list) => [database, ...list]);
         this.createForm.reset();
-        this.createSuccess = `App "${app.name}" created successfully.`;
+        this.createSuccess = `Database "${database.name}" created successfully.`;
         this.creating = false;
         setTimeout(() => (this.createSuccess = ''), 4000);
       },
       error: (err) => {
-        this.createError = err?.error?.message ?? 'Failed to create app';
+        this.createError = err?.error?.message ?? 'Failed to create database';
         this.creating = false;
       },
     });
   }
 
-  toggleToken(appId: string): void {
-    if (this.visibleToken() === appId) {
+  toggleToken(databaseId: string): void {
+    if (this.visibleToken() === databaseId) {
       this.visibleToken.set(null);
       return;
     }
-    this.visibleToken.set(appId);
-    if (this.tokenMap()[appId]) return;
-    this.tokenLoading.set(true);
-    this.http.get<{ apiToken: string }>(`/api/apps/${appId}/token`).subscribe({
+
+    this.visibleToken.set(databaseId);
+    this.ensureToken(databaseId);
+  }
+
+  refreshToken(databaseId: string): void {
+    this.refreshingTokenFor.set(databaseId);
+    this.http.post<TokenResponse>(`/api/databases/${databaseId}/token/rotate`, {}).subscribe({
       next: (res) => {
-        this.tokenMap.update((m) => ({ ...m, [appId]: res.apiToken }));
-        this.tokenLoading.set(false);
+        this.tokenMap.update((m) => ({ ...m, [databaseId]: res.apiToken }));
+        this.refreshingTokenFor.set(null);
+        this.copied.set(null);
       },
-      error: () => this.tokenLoading.set(false),
+      error: () => this.refreshingTokenFor.set(null),
     });
   }
 
-  copyToken(appId: string): void {
-    const token = this.tokenMap()[appId];
-    if (!token) return;
-    navigator.clipboard.writeText(token).then(() => {
-      this.copied.set(appId);
-      setTimeout(() => this.copied.set(null), 2000);
-    });
-  }
-
-  goToRecordsTest(appId: string): void {
-    const existingToken = this.tokenMap()[appId];
-    if (existingToken) {
-      this.router.navigate(['/records-test'], { queryParams: { appId, apiToken: existingToken } });
+  async copyToken(databaseId: string): Promise<void> {
+    const token = this.tokenMap()[databaseId];
+    if (!token) {
+      this.ensureToken(databaseId, async (loaded) => {
+        await this.copyTextToClipboard(loaded, databaseId);
+      });
       return;
     }
 
-    this.testing.set(appId);
-    this.http.get<{ apiToken: string }>(`/api/apps/${appId}/token`).subscribe({
-      next: (res) => {
-        this.tokenMap.update((m) => ({ ...m, [appId]: res.apiToken }));
-        this.testing.set(null);
-        this.router.navigate(['/records-test'], { queryParams: { appId, apiToken: res.apiToken } });
+    await this.copyTextToClipboard(token, databaseId);
+  }
+
+  startEditDescription(database: VaultDatabase): void {
+    this.editingDescriptionFor.set(database._id);
+    this.descriptionDraft = database.description ?? '';
+  }
+
+  cancelEditDescription(): void {
+    this.editingDescriptionFor.set(null);
+    this.descriptionDraft = '';
+  }
+
+  saveDescription(databaseId: string): void {
+    this.saveDescriptionFor.set(databaseId);
+    this.http.patch<VaultDatabase>(`/api/databases/${databaseId}`, { description: this.descriptionDraft }).subscribe({
+      next: (updated) => {
+        this.databases.update((list) => list.map((database) => (database._id === databaseId ? updated : database)));
+        this.saveDescriptionFor.set(null);
+        this.cancelEditDescription();
       },
-      error: () => this.testing.set(null),
+      error: () => this.saveDescriptionFor.set(null),
     });
   }
 
-  deleteApp(appId: string): void {
-    if (!confirm('Delete this app? All its records will still exist in the database.')) return;
-    this.deleting = appId;
-    this.http.delete(`/api/apps/${appId}`).subscribe({
+  goToRecordsTest(databaseId: string): void {
+    const existingToken = this.tokenMap()[databaseId];
+    if (existingToken) {
+      this.router.navigate(['/records-test'], { queryParams: { databaseId, apiToken: existingToken } });
+      return;
+    }
+
+    this.testing.set(databaseId);
+    this.ensureToken(
+      databaseId,
+      (token) => {
+        this.testing.set(null);
+        this.router.navigate(['/records-test'], { queryParams: { databaseId, apiToken: token } });
+      },
+      () => this.testing.set(null),
+    );
+  }
+
+  deleteDatabase(databaseId: string): void {
+    if (!confirm('Delete this database? All its records will still exist in the master-database.')) return;
+    this.deleting = databaseId;
+    this.http.delete(`/api/databases/${databaseId}`).subscribe({
       next: () => {
-        this.apps.update((list) => list.filter((a) => a._id !== appId));
-        if (this.visibleToken() === appId) this.visibleToken.set(null);
+        this.databases.update((list) => list.filter((a) => a._id !== databaseId));
+        if (this.visibleToken() === databaseId) this.visibleToken.set(null);
         this.deleting = null;
       },
       error: () => (this.deleting = null),
     });
   }
-}
 
+  private ensureToken(databaseId: string, onLoaded?: (token: string) => void, onError?: () => void): void {
+    const cached = this.tokenMap()[databaseId];
+    if (cached) {
+      onLoaded?.(cached);
+      return;
+    }
+
+    this.tokenLoadingFor.set(databaseId);
+    this.http.get<TokenResponse>(`/api/databases/${databaseId}/token`).subscribe({
+      next: (res) => {
+        this.tokenMap.update((m) => ({ ...m, [databaseId]: res.apiToken }));
+        this.tokenLoadingFor.set(null);
+        onLoaded?.(res.apiToken);
+      },
+      error: () => {
+        this.tokenLoadingFor.set(null);
+        onError?.();
+      },
+    });
+  }
+
+  private async copyTextToClipboard(token: string, databaseId: string): Promise<void> {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(token);
+      } else {
+        this.copyWithTextareaFallback(token);
+      }
+      this.copied.set(databaseId);
+      setTimeout(() => this.copied.set(null), 2000);
+    } catch {
+      try {
+        this.copyWithTextareaFallback(token);
+        this.copied.set(databaseId);
+        setTimeout(() => this.copied.set(null), 2000);
+      } catch {
+        this.copied.set(null);
+      }
+    }
+  }
+
+  private copyWithTextareaFallback(value: string): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    if (!ok) {
+      throw new Error('copy failed');
+    }
+  }
+}

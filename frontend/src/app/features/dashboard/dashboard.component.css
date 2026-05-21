@@ -38,13 +38,21 @@
   margin-bottom: 0.75rem;
 }
 
-.app-name {
+.database-name {
   font-weight: 600;
 }
 
-.app-badge,
+.database-badge,
 .app-description {
   margin-left: 0.5rem;
+}
+
+.description-row {
+  margin: 0.5rem 0 0.75rem;
+}
+
+.app-description-text {
+  margin: 0;
 }
 
 .token-section {
