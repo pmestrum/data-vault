@@ -1,0 +1,63 @@
+
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - data-vault-net
+    environment:
+      MONGO_INITDB_DATABASE: datavault
+
+  backend:
+    image: node:22-alpine
+    working_dir: /app
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    networks:
+      - data-vault-net
+    environment:
+      PORT: 3000
+      MONGO_URI: mongodb://mongo:27017/datavault
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+    command: >
+      sh -c "npm ci && npx nest start --watch --debug 0.0.0.0:9229"
+    volumes:
+      - ./backend:/app
+      - backend-node-modules:/app/node_modules
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - data-vault-net
+    command: >
+      sh -c "npm ci && npx ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.docker.conf.json --poll 1000"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "4200:4200"
+
+volumes:
+  mongo-data:
+  backend-node-modules:
+  frontend-node-modules:
+
+networks:
+  data-vault-net:
+    driver: bridge
+

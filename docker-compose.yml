@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - data-vault-net
+    environment:
+      MONGO_INITDB_DATABASE: datavault
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    networks:
+      - data-vault-net
+    environment:
+      PORT: 3000
+      MONGO_URI: mongodb://mongo:27017/datavault
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+    expose:
+      - "3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - data-vault-net
+    ports:
+      - "4200:80"
+
+volumes:
+  mongo-data:
+
+networks:
+  data-vault-net:
+    driver: bridge
+

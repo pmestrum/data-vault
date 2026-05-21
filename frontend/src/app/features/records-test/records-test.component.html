@@ -1,0 +1,202 @@
+<div class="page-header">
+  <h1>Records API Test</h1>
+  <p>Create, update, query, fetch, and delete records using app credentials.</p>
+</div>
+
+<div class="card section-card">
+  <h2 class="section-title">Auth Headers</h2>
+  <div class="field-grid">
+    <div class="form-group compact-group">
+      <label class="form-label" for="appId">App ID (x-app-id)</label>
+      <input id="appId" class="form-control" [(ngModel)]="appId" name="appId" placeholder="x-app-id" [readonly]="appIdReadonly" />
+    </div>
+    <div class="form-group compact-group">
+      <label class="form-label" for="apiToken">API Token (x-api-token)</label>
+      <input id="apiToken" class="form-control" [(ngModel)]="apiToken" name="apiToken" placeholder="x-api-token" [readonly]="apiTokenReadonly" />
+    </div>
+  </div>
+</div>
+
+<div class="card section-card">
+  <div class="tab-buttons" role="tablist" aria-label="Records API actions">
+    <button class="tab-button"
+            [class.is-active]="activeTab() === 'query'"
+            role="tab"
+            id="tab-query"
+            [attr.aria-selected]="activeTab() === 'query'"
+            [attr.aria-controls]="'panel-query'"
+            (click)="setActiveTab('query')">
+      QUERY
+    </button>
+    <button class="tab-button"
+            [class.is-active]="activeTab() === 'manage'"
+            role="tab"
+            id="tab-manage"
+            [attr.aria-selected]="activeTab() === 'manage'"
+            [attr.aria-controls]="'panel-manage'"
+            (click)="setActiveTab('manage')">
+      GET/UPDATE/DELETE
+    </button>
+    <button class="tab-button"
+            [class.is-active]="activeTab() === 'create'"
+            role="tab"
+            id="tab-create"
+            [attr.aria-selected]="activeTab() === 'create'"
+            [attr.aria-controls]="'panel-create'"
+            (click)="setActiveTab('create')">
+      CREATE
+    </button>
+  </div>
+
+  @if (activeTab() === 'query') {
+    <section id="panel-query" class="tab-panel" role="tabpanel" aria-labelledby="tab-query">
+    <h2 class="section-title">Query Records</h2>
+    <div class="field-grid create-grid">
+      <div class="form-group compact-group">
+        <label class="form-label" for="queryTableId">Filter by Table ID (optional)</label>
+        <input id="queryTableId" class="form-control" [(ngModel)]="queryTableId" name="queryTableId" placeholder="Filter tableId (optional)" />
+      </div>
+      <div class="form-group compact-group">
+        <label class="form-label" for="queryCreatedBy">Filter by Created By (optional)</label>
+        <input id="queryCreatedBy" class="form-control" [(ngModel)]="queryCreatedBy" name="queryCreatedBy" placeholder="Filter createdBy (optional)" />
+      </div>
+    </div>
+    <div class="field-grid create-grid">
+      <div class="form-group compact-group">
+        <label class="form-label" for="queryLogic">Advanced filter logic</label>
+        <select id="queryLogic" class="form-control" [(ngModel)]="queryLogic" name="queryLogic">
+          <option value="and">AND</option>
+          <option value="or">OR</option>
+        </select>
+      </div>
+      <div class="form-group compact-group">
+        <label class="form-label" for="queryLimit">Limit (1-500, optional)</label>
+        <input id="queryLimit" class="form-control" [(ngModel)]="queryLimitText" name="queryLimit" placeholder="100" />
+      </div>
+    </div>
+    <div class="form-group compact-group">
+      <label class="form-label" for="queryFilters">Advanced filters JSON (optional)</label>
+      <textarea id="queryFilters" class="form-control font-mono" rows="5" [(ngModel)]="queryFiltersText" name="queryFilters" placeholder='[{"field":"json.status","op":"eq","value":"active"}]'></textarea>
+    </div>
+    <div class="form-group compact-group">
+      <label class="form-label" for="querySort">Sort JSON (optional)</label>
+      <textarea id="querySort" class="form-control font-mono" rows="3" [(ngModel)]="querySortText" name="querySort" placeholder='[{"field":"createdAt","dir":"desc"}]'></textarea>
+    </div>
+    <button class="btn btn-ghost" (click)="queryRecords()" [disabled]="busy()">Query</button>
+
+    @if (records().length > 0) {
+      <div class="query-table-wrap">
+        <table class="query-table">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Table ID</th>
+              <th scope="col">Created At</th>
+              <th scope="col">JSON</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of records(); track record.id) {
+              <tr>
+                <td class="font-mono">{{ record.id }}</td>
+                <td class="font-mono">{{ record.tableId }}</td>
+                <td>{{ record.createdAt | date:'medium' }}</td>
+                <td>
+                  <div class="json-hover-cell" tabindex="0" aria-label="Show JSON payload">
+                    <span class="json-icon" aria-hidden="true">&#123; &#125;</span>
+                    <pre class="result-pre query-json-popover">{{ stringify(record.json) }}</pre>
+                  </div>
+                </td>
+                <td>
+                  <div class="flex gap-2">
+                    <button class="btn btn-ghost btn-sm" (click)="loadForUpdate(record); setActiveTab('manage')">Use for update</button>
+                    <button class="btn btn-danger btn-sm" (click)="deleteRecord(record.id)" [disabled]="busy()">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    </section>
+  }
+
+  @if (activeTab() === 'manage') {
+    <section id="panel-manage" class="tab-panel" role="tabpanel" aria-labelledby="tab-manage">
+    <h2 class="section-title">Get / Update / Delete Record</h2>
+    <div class="form-group target-group">
+      <label class="form-label" for="targetRecordId">Record ID</label>
+      <input id="targetRecordId" class="form-control" [(ngModel)]="targetRecordId" name="targetRecordId" placeholder="record id" />
+    </div>
+    <div class="action-row flex gap-2">
+      <button class="btn btn-ghost" (click)="getRecord()" [disabled]="busy()">Get by id</button>
+      <button class="btn btn-danger" (click)="deleteTargetRecord()" [disabled]="busy()">Delete by id</button>
+    </div>
+
+    <div class="form-group update-table-group">
+      <label class="form-label" for="updateTableId">Table ID (optional)</label>
+      <input id="updateTableId" class="form-control" [(ngModel)]="updateTableId" name="updateTableId" placeholder="tableId (optional)" />
+    </div>
+    <div class="form-group compact-group">
+      <label class="form-label" for="updateJson">Update JSON Payload</label>
+      <textarea id="updateJson" class="form-control font-mono" rows="5" [(ngModel)]="updateJsonText" name="updateJson" placeholder='{"status":"updated"}'></textarea>
+    </div>
+    <div class="section-actions flex gap-2">
+      <button class="btn btn-primary" (click)="replaceRecord()" [disabled]="busy()">PUT replace</button>
+      <button class="btn btn-ghost" (click)="patchRecord()" [disabled]="busy()">PATCH merge</button>
+    </div>
+    </section>
+  }
+
+  @if (activeTab() === 'create') {
+    <section id="panel-create" class="tab-panel" role="tabpanel" aria-labelledby="tab-create">
+    <h2 class="section-title">Create Record</h2>
+    <div class="field-grid create-grid">
+      <div class="form-group compact-group">
+        <label class="form-label" for="createId">Record ID (optional)</label>
+        <input id="createId" class="form-control" [(ngModel)]="createId" name="createId" placeholder="Record id (optional)" />
+      </div>
+      <div class="form-group compact-group">
+        <label class="form-label" for="createTableId">Table ID</label>
+        <input id="createTableId" class="form-control" [(ngModel)]="createTableId" name="createTableId" placeholder="tableId" />
+      </div>
+      <div class="form-group compact-group">
+        <label class="form-label" for="createBy">Created By</label>
+        <input id="createBy" class="form-control" [(ngModel)]="createBy" name="createBy" placeholder="createdBy" />
+      </div>
+    </div>
+    <div class="form-group compact-group">
+      <label class="form-label" for="createJson">Create JSON Payload</label>
+      <textarea id="createJson" class="form-control font-mono" rows="5" [(ngModel)]="createJsonText" name="createJson" placeholder='{"name":"Alice"}'></textarea>
+    </div>
+    <div class="section-actions flex gap-2">
+      <button class="btn btn-primary" (click)="createRecord()" [disabled]="busy()">Create</button>
+    </div>
+    </section>
+  }
+</div>
+
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+}
+
+@if (resultJson() || lastRequestJson()) {
+  <div class="card">
+    <h2 class="section-title">Last API Result</h2>
+    @if (lastRequestJson()) {
+      <p class="text-muted request-title">Request</p>
+      <pre class="result-pre">{{ lastRequestJson() }}</pre>
+    }
+    @if (resultJson()) {
+      <p class="text-muted request-title">Response</p>
+      <pre class="result-pre">{{ resultJson() }}</pre>
+    }
+  </div>
+}
+

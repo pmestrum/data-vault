@@ -1,0 +1,128 @@
+/* Global styles for data-vault UI */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary:    #4f46e5;
+  --primary-h:  #4338ca;
+  --danger:     #dc2626;
+  --danger-h:   #b91c1c;
+  --bg:         #f8fafc;
+  --surface:    #ffffff;
+  --border:     #e2e8f0;
+  --text:       #0f172a;
+  --muted:      #64748b;
+  --radius:     8px;
+  --shadow:     0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.08);
+  --shadow-lg:  0 10px 25px rgba(0,0,0,.1);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Layout */
+.page { display: flex; flex-direction: column; min-height: 100vh; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; width: 100%; }
+
+/* Nav */
+.navbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  position: sticky; top: 0; z-index: 100;
+}
+.navbar-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px;
+}
+.navbar-brand { font-weight: 700; font-size: 1.1rem; color: var(--primary); text-decoration: none; }
+.navbar-nav { display: flex; align-items: center; gap: .5rem; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: .375rem;
+  padding: .5rem 1rem; border-radius: var(--radius);
+  font-size: .875rem; font-weight: 500;
+  border: none; cursor: pointer; transition: background .15s, opacity .15s;
+  text-decoration: none;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary  { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-h); }
+.btn-ghost    { background: transparent; color: var(--muted); }
+.btn-ghost:hover { background: var(--border); color: var(--text); }
+.btn-danger   { background: var(--danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: var(--danger-h); }
+.btn-sm       { padding: .25rem .625rem; font-size: .8125rem; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+.card + .card { margin-top: 1rem; }
+
+/* Form */
+.form-group { display: flex; flex-direction: column; gap: .375rem; margin-bottom: 1rem; }
+.form-label { font-size: .875rem; font-weight: 500; }
+.form-control {
+  padding: .5rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .875rem;
+  width: 100%;
+  outline: none;
+  transition: border-color .15s;
+}
+.form-control:focus { border-color: var(--primary); }
+.form-error { font-size: .8rem; color: var(--danger); margin-top: .25rem; }
+
+/* Alert */
+.alert {
+  padding: .75rem 1rem; border-radius: var(--radius);
+  font-size: .875rem; margin-bottom: 1rem;
+}
+.alert-error   { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+
+/* Token box */
+.token-box {
+  font-family: monospace; font-size: .78rem;
+  background: #f1f5f9; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: .5rem .75rem;
+  word-break: break-all;
+}
+
+/* Badge */
+.badge {
+  display: inline-block; padding: .125rem .5rem;
+  border-radius: 999px; font-size: .75rem; font-weight: 600;
+  background: #ede9fe; color: var(--primary);
+}
+
+/* Page header */
+.page-header { padding: 2rem 0 1.5rem; }
+.page-header h1 { font-size: 1.5rem; font-weight: 700; }
+.page-header p  { color: var(--muted); margin-top: .25rem; }
+
+/* Misc */
+.mt-1 { margin-top: .25rem; }
+.mt-2 { margin-top: .5rem; }
+.mt-4 { margin-top: 1rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-2 { gap: .5rem; }
+.gap-4 { gap: 1rem; }
+.justify-between { justify-content: space-between; }
+.w-full { width: 100%; }
+.text-muted { color: var(--muted); font-size: .875rem; }
+.text-sm { font-size: .875rem; }
+.font-mono { font-family: monospace; }
+

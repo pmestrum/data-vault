@@ -1,0 +1,84 @@
+<div class="page-header">
+  <h1>Registered Apps</h1>
+  <p>Each app gets a unique API token for record access.</p>
+</div>
+
+<div class="card dashboard-create-card">
+  <h2 class="section-title">Create New App</h2>
+
+  @if (createError) {
+    <div class="alert alert-error">{{ createError }}</div>
+  }
+  @if (createSuccess) {
+    <div class="alert alert-success">{{ createSuccess }}</div>
+  }
+
+  <form [formGroup]="createForm" (ngSubmit)="createApp()" class="create-form">
+    <div class="create-name-field">
+      <input class="form-control" formControlName="name" type="text" placeholder="App name (e.g. my-service)" />
+    </div>
+    <div class="create-description-field">
+      <input class="form-control" formControlName="description" type="text" placeholder="Description (optional)" />
+    </div>
+    <button class="btn btn-primary" type="submit" [disabled]="creating || createForm.invalid">
+      {{ creating ? 'Creating…' : '+ Create' }}
+    </button>
+  </form>
+</div>
+
+@if (loading()) {
+  <p class="text-muted">Loading apps…</p>
+} @else if (apps().length === 0) {
+  <div class="card empty-apps-card">
+    No apps yet. Create your first app above.
+  </div>
+} @else {
+  @for (app of apps(); track app._id) {
+    <div class="card app-card">
+      <div class="flex items-center justify-between app-header-row">
+        <div>
+          <span class="app-name">{{ app.name }}</span>
+          <span class="badge app-badge">App</span>
+          @if (app.description) {
+            <span class="text-muted text-sm app-description">— {{ app.description }}</span>
+          }
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" (click)="goToRecordsTest(app._id)" [disabled]="testing() === app._id">
+            {{ testing() === app._id ? 'Opening…' : 'Test' }}
+          </button>
+          <button class="btn btn-ghost btn-sm" (click)="toggleToken(app._id)">
+            {{ visibleToken() === app._id ? 'Hide Token' : 'Show Token' }}
+          </button>
+          <button class="btn btn-danger btn-sm" (click)="deleteApp(app._id)" [disabled]="deleting === app._id">
+            {{ deleting === app._id ? '…' : 'Delete' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="text-muted text-sm">
+        ID: <span class="font-mono">{{ app._id }}</span>
+        &nbsp;·&nbsp;Created {{ app.createdAt | date:'medium' }}
+      </div>
+
+      @if (visibleToken() === app._id) {
+        <div class="token-section">
+          @if (tokenLoading()) {
+            <p class="text-muted text-sm">Fetching token…</p>
+          } @else {
+            <div class="flex gap-2 items-center token-row">
+              <div class="token-box token-value">{{ tokenMap()[app._id] || '—' }}</div>
+              <button class="btn btn-ghost btn-sm" (click)="copyToken(app._id)">
+                {{ copied() === app._id ? '✓ Copied' : 'Copy' }}
+              </button>
+            </div>
+            <p class="text-muted token-hint">
+              Use as <code>x-api-token</code> header · App ID goes in <code>x-app-id</code>
+            </p>
+          }
+        </div>
+      }
+    </div>
+  }
+}
+
