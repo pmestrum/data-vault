@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 
 export interface CurlSettings {
   publicUrl: string;
-  absoluteApiPath: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -10,7 +9,6 @@ export class CurlSettingsService {
   private readonly STORAGE_KEY = 'recordsTest.curlSettings';
   private readonly defaults: CurlSettings = {
     publicUrl: this.getDefaultPublicUrl(),
-    absoluteApiPath: '/api',
   };
 
   getSettings(): CurlSettings {
@@ -44,14 +42,13 @@ export class CurlSettingsService {
   toAbsoluteUrl(requestUrl: string): string {
     const settings = this.getSettings();
     const publicUrl = this.normalizePublicUrl(settings.publicUrl);
-    const apiPath = this.normalizeApiPath(settings.absoluteApiPath);
 
     if (!requestUrl.startsWith('/')) {
-      return `${publicUrl}${apiPath}/${requestUrl}`;
+      return `${publicUrl}/${requestUrl}`;
     }
 
     if (requestUrl === '/api' || requestUrl.startsWith('/api/')) {
-      return `${publicUrl}${apiPath}${requestUrl.slice('/api'.length)}`;
+      return `${publicUrl}/${requestUrl.slice('/api'.length)}`;
     }
 
     return `${publicUrl}${requestUrl}`;
@@ -60,7 +57,6 @@ export class CurlSettingsService {
   private normalizeSettings(settings: Partial<CurlSettings>): CurlSettings {
     return {
       publicUrl: this.normalizePublicUrl(settings.publicUrl),
-      absoluteApiPath: this.normalizeApiPath(settings.absoluteApiPath),
     };
   }
 
@@ -80,16 +76,6 @@ export class CurlSettingsService {
     }
   }
 
-  private normalizeApiPath(path?: string): string {
-    const trimmed = (path ?? '').trim();
-    if (!trimmed) {
-      return this.defaults.absoluteApiPath;
-    }
-
-    const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-    const withoutTrailingSlash = withLeadingSlash.replace(/\/+$/, '');
-    return withoutTrailingSlash || this.defaults.absoluteApiPath;
-  }
 
   private getDefaultPublicUrl(): string {
     if (typeof window === 'undefined') {

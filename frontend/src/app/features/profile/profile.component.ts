@@ -29,7 +29,6 @@ export class ProfileComponent {
 
   curlForm = this.fb.group({
     publicUrl: ['', Validators.required],
-    absoluteApiPath: ['/api', Validators.required],
   });
 
   constructor(
@@ -68,15 +67,14 @@ export class ProfileComponent {
 
   saveCurlSettings(): void {
     if (this.curlForm.invalid) {
-      this.curlSettingsError = 'Both URL fields are required.';
+      this.curlSettingsError = 'Public URL is required.';
       this.curlSettingsSuccess = '';
       return;
     }
 
-    const { publicUrl, absoluteApiPath } = this.curlForm.getRawValue();
+    const { publicUrl } = this.curlForm.getRawValue();
     const saved = this.curlSettings.saveSettings({
       publicUrl: publicUrl ?? '',
-      absoluteApiPath: absoluteApiPath ?? '',
     });
 
     this.curlForm.patchValue(saved);
