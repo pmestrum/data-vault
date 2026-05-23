@@ -25,6 +25,8 @@ services:
       MONGO_URI: mongodb://mongo:27017/datavault
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
+      ADMIN_BOOTSTRAP_LOG_PASSWORD: ${ADMIN_BOOTSTRAP_LOG_PASSWORD:-false}
     command: >
       sh -c "npm ci && npx nest start --watch --debug 0.0.0.0:9229"
     volumes:

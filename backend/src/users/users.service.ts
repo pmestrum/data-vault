@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
@@ -6,16 +7,30 @@ import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly configService: ConfigService,
+  ) {}
 
   async onModuleInit() {
     const count = await this.userModel.countDocuments();
     if (count === 0) {
-      const password = this.generatePassword();
+      const configuredPassword = this.readTrimmedEnv('ADMIN_BOOTSTRAP_PASSWORD');
+      const logConfiguredPassword = this.readBooleanEnv('ADMIN_BOOTSTRAP_LOG_PASSWORD');
+      const password = configuredPassword ?? this.generatePassword();
       const passwordHash = await bcrypt.hash(password, 12);
       await this.userModel.create({ username: 'admin', passwordHash, role: 'admin' });
       console.log('======================================================');
-      console.log('  Admin password (first-boot only): ' + password);
+      if (configuredPassword) {
+        console.log('  Admin user created from ADMIN_BOOTSTRAP_PASSWORD (first-boot only).');
+        if (logConfiguredPassword) {
+          console.log('  Admin password from env: ' + password);
+        } else {
+          console.log('  Admin password value is not printed (set ADMIN_BOOTSTRAP_LOG_PASSWORD=true to print once).');
+        }
+      } else {
+        console.log('  Admin password (first-boot only): ' + password);
+      }
       console.log('  Change this via Profile → Change Password in the UI.');
       console.log('======================================================');
     }
@@ -47,6 +62,19 @@ export class UsersService implements OnModuleInit {
       pw += chars[Math.floor(Math.random() * chars.length)];
     }
     return pw;
+  }
+
+  private readTrimmedEnv(key: string): string | undefined {
+    const value = this.configService.get<string>(key);
+    if (!value) return undefined;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  private readBooleanEnv(key: string): boolean {
+    const value = this.readTrimmedEnv(key);
+    if (!value) return false;
+    return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
   }
 }
 

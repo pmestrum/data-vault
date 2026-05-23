@@ -38,6 +38,15 @@
       GET/UPDATE/DELETE
     </button>
     <button class="tab-button"
+            [class.is-active]="activeTab() === 'bulk-patch'"
+            role="tab"
+            id="tab-bulk-patch"
+            [attr.aria-selected]="activeTab() === 'bulk-patch'"
+            [attr.aria-controls]="'panel-bulk-patch'"
+            (click)="setActiveTab('bulk-patch')">
+      BULK PATCH
+    </button>
+    <button class="tab-button"
             [class.is-active]="activeTab() === 'create'"
             role="tab"
             id="tab-create"
@@ -82,7 +91,10 @@
       <label class="form-label" for="querySort">Sort JSON (optional)</label>
       <textarea id="querySort" class="form-control font-mono" rows="3" [(ngModel)]="querySortText" name="querySort" placeholder='[{"field":"createdAt","dir":"desc"}]'></textarea>
     </div>
-    <button class="btn btn-ghost" (click)="queryRecords()" [disabled]="busy()">Query</button>
+    <div class="section-actions flex gap-2">
+      <button class="btn btn-ghost" (click)="queryRecords()" [disabled]="busy()">Query</button>
+      <button class="btn btn-ghost" (click)="copyQueryAsCurl()" [disabled]="busy()">Copy as cURL command</button>
+    </div>
 
     @if (records().length > 0) {
       <div class="query-table-wrap">
@@ -112,14 +124,16 @@
                   <div class="flex gap-2">
                     <button class="btn btn-ghost btn-sm" (click)="loadForUpdate(record); setActiveTab('manage')">Use for update</button>
                     <button class="btn btn-danger btn-sm" (click)="deleteRecord(record.id)" [disabled]="busy()">Delete</button>
+                    <button class="btn btn-ghost btn-sm" (click)="copyDeleteAsCurl(record.id)" [disabled]="busy()">Copy as cURL command</button>
                   </div>
                 </td>
               </tr>
             }
-          </tbody>
-        </table>
-      </div>
-    }
+           </tbody>
+         </table>
+       </div>
+       <button class="btn btn-primary" (click)="initiateBulkPatch()" [disabled]="busy()">Bulk Patch Selected Records</button>
+     }
     </section>
   }
 
@@ -133,6 +147,7 @@
     <div class="action-row flex gap-2">
       <button class="btn btn-ghost" (click)="getRecord()" [disabled]="busy()">Get by id</button>
       <button class="btn btn-danger" (click)="deleteTargetRecord()" [disabled]="busy()">Delete by id</button>
+      <button class="btn btn-ghost" (click)="copyDeleteAsCurl()" [disabled]="busy()">Copy as cURL command</button>
     </div>
 
     <div class="form-group update-table-group">
@@ -145,14 +160,33 @@
     </div>
     <div class="section-actions flex gap-2">
       <button class="btn btn-primary" (click)="replaceRecord()" [disabled]="busy()">PUT replace</button>
+      <button class="btn btn-ghost" (click)="copyPutAsCurl()" [disabled]="busy()">Copy as cURL command</button>
       <button class="btn btn-ghost" (click)="patchRecord()" [disabled]="busy()">PATCH merge</button>
+      <button class="btn btn-ghost" (click)="copyPatchAsCurl()" [disabled]="busy()">Copy as cURL command</button>
     </div>
-    </section>
-  }
+     </section>
+   }
 
-  @if (activeTab() === 'create') {
-    <section id="panel-create" class="tab-panel" role="tabpanel" aria-labelledby="tab-create">
-    <h2 class="section-title">Create Record</h2>
+   @if (activeTab() === 'bulk-patch') {
+     <section id="panel-bulk-patch" class="tab-panel" role="tabpanel" aria-labelledby="tab-bulk-patch">
+     <h2 class="section-title">Bulk Patch Records</h2>
+     <div class="form-group compact-group">
+       <label class="form-label" for="bulkPatchRecordIds">Record IDs (JSON array)</label>
+       <textarea id="bulkPatchRecordIds" class="form-control font-mono" rows="5" [(ngModel)]="bulkPatchRecordIdsText" name="bulkPatchRecordIds" placeholder='["record-1","record-2","record-3"]'></textarea>
+     </div>
+     <div class="form-group compact-group">
+       <label class="form-label" for="bulkPatchJson">Patch JSON Payload</label>
+       <textarea id="bulkPatchJson" class="form-control font-mono" rows="5" [(ngModel)]="bulkPatchJsonText" name="bulkPatchJson" placeholder='{"status":"bulk-updated"}'></textarea>
+     </div>
+     <div class="section-actions flex gap-2">
+       <button class="btn btn-primary" (click)="bulkPatchRecords()" [disabled]="busy()">Patch All Records</button>
+     </div>
+     </section>
+   }
+
+   @if (activeTab() === 'create') {
+     <section id="panel-create" class="tab-panel" role="tabpanel" aria-labelledby="tab-create">
+     <h2 class="section-title">Create Record</h2>
     <div class="field-grid create-grid">
       <div class="form-group compact-group">
         <label class="form-label" for="createId">Record ID (optional)</label>
@@ -173,6 +207,7 @@
     </div>
     <div class="section-actions flex gap-2">
       <button class="btn btn-primary" (click)="createRecord()" [disabled]="busy()">Create</button>
+      <button class="btn btn-ghost" (click)="copyCreateAsCurl()" [disabled]="busy()">Copy as cURL command</button>
     </div>
     </section>
   }

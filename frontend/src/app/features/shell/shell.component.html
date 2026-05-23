@@ -1,24 +1,25 @@
 <div class="page">
-  <nav class="navbar">
-    <div class="container navbar-inner">
-      <a class="navbar-brand" routerLink="/dashboard">🔐 Data Vault</a>
-      <div class="navbar-nav">
-        @if (auth.user()) {
-          <span class="text-muted text-sm">{{ auth.user()?.username }}</span>
-          <a class="btn btn-ghost btn-sm" routerLink="/dashboard" routerLinkActive="btn-primary">
-            Apps
-          </a>
-          <a class="btn btn-ghost btn-sm" routerLink="/profile" routerLinkActive="btn-primary">
-            Settings
-          </a>
-          <button class="btn btn-ghost btn-sm" (click)="auth.logout()">Sign out</button>
-        }
-      </div>
-    </div>
-  </nav>
+    <nav class="navbar">
+        <div class="container navbar-inner">
+            <a class="navbar-brand" routerLink="/dashboard">🔐 Data Vault</a>
 
-  <main class="container shell-main">
-    <router-outlet />
-  </main>
+            <div class="navbar-nav">
+                @if (auth.user()) {
+                    <span class="text-muted text-sm">{{ auth.user()?.username }}</span>
+                    <a class="btn btn-ghost btn-sm" routerLink="/dashboard" routerLinkActive="btn-primary">
+                        Databases
+                    </a>
+                    <a class="btn btn-ghost btn-sm" routerLink="/profile" routerLinkActive="btn-primary">
+                        Settings
+                    </a>
+                    <button class="btn btn-ghost btn-sm" (click)="auth.logout()">Sign out</button>
+                }
+            </div>
+        </div>
+    </nav>
+
+    <main class="container shell-main">
+        <router-outlet/>
+    </main>
 </div>
 

@@ -13,6 +13,7 @@ interface VaultDatabase {
 
 interface TokenResponse {
   apiToken: string;
+  previousTokenPreview?: string;
 }
 
 @Component({
@@ -27,6 +28,7 @@ export class DashboardComponent implements OnInit {
   loading = signal(true);
   visibleToken = signal<string | null>(null);
   tokenMap = signal<Record<string, string>>({});
+  previousTokenPreviewMap = signal<Record<string, string>>({});
   tokenLoadingFor = signal<string | null>(null);
   refreshingTokenFor = signal<string | null>(null);
   copied = signal<string | null>(null);
@@ -97,6 +99,9 @@ export class DashboardComponent implements OnInit {
     this.http.post<TokenResponse>(`/api/databases/${databaseId}/token/rotate`, {}).subscribe({
       next: (res) => {
         this.tokenMap.update((m) => ({ ...m, [databaseId]: res.apiToken }));
+        if (res.previousTokenPreview) {
+          this.previousTokenPreviewMap.update((m) => ({ ...m, [databaseId]: res.previousTokenPreview! }));
+        }
         this.refreshingTokenFor.set(null);
         this.copied.set(null);
       },
@@ -180,6 +185,9 @@ export class DashboardComponent implements OnInit {
     this.http.get<TokenResponse>(`/api/databases/${databaseId}/token`).subscribe({
       next: (res) => {
         this.tokenMap.update((m) => ({ ...m, [databaseId]: res.apiToken }));
+        if (res.previousTokenPreview) {
+          this.previousTokenPreviewMap.update((m) => ({ ...m, [databaseId]: res.previousTokenPreview! }));
+        }
         this.tokenLoadingFor.set(null);
         onLoaded?.(res.apiToken);
       },

@@ -150,3 +150,8 @@
   margin-bottom: 0.75rem;
 }
 
+.action-row,
+.section-actions {
+  flex-wrap: wrap;
+}
+

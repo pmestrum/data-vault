@@ -36,12 +36,18 @@ export class DatabasesService {
     return this.findPublicById(id);
   }
 
-  async getToken(id: string): Promise<{ apiToken: string }> {
+  async getToken(id: string): Promise<{ apiToken: string; previousTokenPreview?: string }> {
     const app = await this.findByIdWithTokens(id);
-    return { apiToken: this.resolveCurrentToken(app) };
+    const response: { apiToken: string; previousTokenPreview?: string } = {
+      apiToken: this.resolveCurrentToken(app),
+    };
+    if (app.apiTokenPrevious) {
+      response.previousTokenPreview = this.getTokenPreview(app.apiTokenPrevious);
+    }
+    return response;
   }
 
-  async rotateToken(id: string): Promise<{ apiToken: string }> {
+  async rotateToken(id: string): Promise<{ apiToken: string; previousTokenPreview?: string }> {
     const app = await this.findByIdWithTokens(id);
     const nextToken = this.generateApiToken();
     const currentToken = this.resolveCurrentToken(app);
@@ -52,7 +58,9 @@ export class DatabasesService {
     app.apiToken = undefined;
 
     await app.save();
-    return { apiToken: nextToken };
+    const response: { apiToken: string; previousTokenPreview?: string } = { apiToken: nextToken };
+    response.previousTokenPreview = this.getTokenPreview(currentToken);
+    return response;
   }
 
   async findByIdWithTokens(id: string): Promise<DatabaseDocument> {
@@ -80,6 +88,14 @@ export class DatabasesService {
 
   private generateApiToken(): string {
     return randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '');
+  }
+
+  private getTokenPreview(token: string): string {
+    if (token.length <= 16) return token;
+    const start = token.substring(0, 8);
+    const end = token.substring(token.length - 8);
+    const middleLength = token.length - 16;
+    return `${start}${'•'.repeat(Math.min(middleLength, 8))}${end}`;
   }
 
   private async findPublicById(id: string): Promise<DatabaseDocument> {

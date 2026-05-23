@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/auth/auth.service';
+import { CurlSettingsService } from '../../core/records/curl-settings.service';
 
 @Component({
   selector: 'app-profile',
@@ -14,6 +15,8 @@ export class ProfileComponent {
   loading = false;
   error = '';
   success = '';
+  curlSettingsSuccess = '';
+  curlSettingsError = '';
 
   form = this.fb.group(
     {
@@ -24,7 +27,19 @@ export class ProfileComponent {
     { validators: this.matchPasswords },
   );
 
-  constructor(private fb: FormBuilder, private auth: AuthService) {}
+  curlForm = this.fb.group({
+    publicUrl: ['', Validators.required],
+    absoluteApiPath: ['/api', Validators.required],
+  });
+
+  constructor(
+    private fb: FormBuilder,
+    private auth: AuthService,
+    private curlSettings: CurlSettingsService,
+  ) {
+    const settings = this.curlSettings.getSettings();
+    this.curlForm.patchValue(settings);
+  }
 
   matchPasswords(group: any) {
     const np = group.get('newPassword')?.value;
@@ -49,6 +64,24 @@ export class ProfileComponent {
         this.loading = false;
       },
     });
+  }
+
+  saveCurlSettings(): void {
+    if (this.curlForm.invalid) {
+      this.curlSettingsError = 'Both URL fields are required.';
+      this.curlSettingsSuccess = '';
+      return;
+    }
+
+    const { publicUrl, absoluteApiPath } = this.curlForm.getRawValue();
+    const saved = this.curlSettings.saveSettings({
+      publicUrl: publicUrl ?? '',
+      absoluteApiPath: absoluteApiPath ?? '',
+    });
+
+    this.curlForm.patchValue(saved);
+    this.curlSettingsError = '';
+    this.curlSettingsSuccess = 'cURL URL settings saved.';
   }
 }
 

@@ -99,7 +99,20 @@ App URLs:
 
 ### First-boot admin password
 
-On first startup the backend seeds an `admin` user with a randomly generated password.
+On first startup the backend seeds an `admin` user.
+
+- If `ADMIN_BOOTSTRAP_PASSWORD` is set, that value is used as the initial password.
+- If `ADMIN_BOOTSTRAP_PASSWORD` is empty, a random password is generated and printed once.
+- Seeding is first-boot only (when the users collection is empty), so you will not see this message on later restarts.
+
+Add these values to your `.env` (recommended):
+
+```bash
+ADMIN_BOOTSTRAP_PASSWORD=change-me-now
+ADMIN_BOOTSTRAP_LOG_PASSWORD=false
+```
+
+`ADMIN_BOOTSTRAP_LOG_PASSWORD=true` prints the env password once at first boot. Keep it `false` for safer logs.
 
 - **Docker mode**: get it from container logs:
 
@@ -114,6 +127,14 @@ docker compose -f docker-compose.dev.yml logs backend | grep "Admin password"
 ```
 
 - **Non-Docker mode**: read it from the backend terminal output.
+
+If you do not see any first-boot password line, the admin user was likely already seeded earlier.
+To force a fresh seed in Docker, remove volumes and start again:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
 
 Log in at http://localhost:4200/login with `admin` and that password, then change it in **Profile -> Change Password**.
 

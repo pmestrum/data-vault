@@ -27,10 +27,10 @@
 </div>
 
 @if (loading()) {
-  <p class="text-muted">Loading apps…</p>
+  <p class="text-muted">Loading databases…</p>
 } @else if (databases().length === 0) {
-  <div class="card empty-apps-card">
-    No apps yet. Create your first app above.
+  <div class="card empty-databases-card">
+    No apps yet. Create your first database above.
   </div>
 } @else {
   @for (database of databases(); track database._id) {
@@ -38,7 +38,6 @@
       <div class="flex items-center justify-between app-header-row">
         <div>
           <span class="database-name">{{ database.name }}</span>
-          <span class="badge database-badge">App</span>
         </div>
         <div class="flex gap-2">
           <button class="btn btn-ghost btn-sm" (click)="goToRecordsTest(database._id)" [disabled]="testing() === database._id">
@@ -78,26 +77,32 @@
         &nbsp;·&nbsp;Created {{ database.createdAt | date:'medium' }}
       </div>
 
-      @if (visibleToken() === database._id) {
-        <div class="token-section">
-          @if (tokenLoadingFor() === database._id) {
-            <p class="text-muted text-sm">Fetching token…</p>
-          } @else {
-            <div class="flex gap-2 items-center token-row">
-              <div class="token-box token-value">{{ tokenMap()[database._id] || '—' }}</div>
-              <button class="btn btn-ghost btn-sm" (click)="copyToken(database._id)">
-                {{ copied() === database._id ? '✓ Copied' : 'Copy' }}
-              </button>
-              <button class="btn btn-ghost btn-sm" (click)="refreshToken(database._id)" [disabled]="refreshingTokenFor() === database._id">
-                {{ refreshingTokenFor() === database._id ? 'Refreshing…' : 'Refresh Token' }}
-              </button>
-            </div>
-            <p class="text-muted token-hint">
-              Use as <code>x-api-token</code> header · Database ID goes in <code>x-database-id</code>
-            </p>
-          }
-        </div>
-      }
+       @if (visibleToken() === database._id) {
+         <div class="token-section">
+           @if (tokenLoadingFor() === database._id) {
+             <p class="text-muted text-sm">Fetching token…</p>
+           } @else {
+             <div class="flex gap-2 items-center token-row">
+               <div class="token-box token-value">{{ tokenMap()[database._id] || '—' }}</div>
+               <button class="btn btn-ghost btn-sm" (click)="copyToken(database._id)">
+                 {{ copied() === database._id ? '✓ Copied' : 'Copy' }}
+               </button>
+               <button class="btn btn-ghost btn-sm" (click)="refreshToken(database._id)" [disabled]="refreshingTokenFor() === database._id">
+                 {{ refreshingTokenFor() === database._id ? 'Refreshing…' : 'Refresh Token' }}
+               </button>
+             </div>
+             <p class="text-muted token-hint">
+               Use as <code>x-api-token</code> header · Database ID goes in <code>x-database-id</code>
+             </p>
+             @if (previousTokenPreviewMap()[database._id]) {
+               <div class="previous-token-section">
+                 <p class="text-muted text-sm previous-token-label">Previous token:</p>
+                 <div class="token-box token-preview-value">{{ previousTokenPreviewMap()[database._id] }}</div>
+               </div>
+             }
+           }
+         </div>
+       }
     </div>
   }
 }

@@ -44,3 +44,43 @@
   </form>
 </div>
 
+<div class="card profile-card">
+  <h2 class="section-title">cURL URL Settings</h2>
+  <p class="text-muted">Used by the "Copy as cURL command" buttons in Records API Test.</p>
+
+  @if (curlSettingsError) {
+    <div class="alert alert-error">{{ curlSettingsError }}</div>
+  }
+  @if (curlSettingsSuccess) {
+    <div class="alert alert-success">{{ curlSettingsSuccess }}</div>
+  }
+
+  <form [formGroup]="curlForm" (ngSubmit)="saveCurlSettings()">
+    <div class="form-group">
+      <label class="form-label" for="publicUrl">Public URL</label>
+      <input
+        id="publicUrl"
+        class="form-control"
+        formControlName="publicUrl"
+        placeholder="https://example.com"
+        autocomplete="url"
+      />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="absoluteApiPath">Absolute API path</label>
+      <input
+        id="absoluteApiPath"
+        class="form-control"
+        formControlName="absoluteApiPath"
+        placeholder="/api"
+        autocomplete="off"
+      />
+    </div>
+
+    <button class="btn btn-primary" type="submit" [disabled]="curlForm.invalid">
+      Save cURL settings
+    </button>
+  </form>
+</div>
+
