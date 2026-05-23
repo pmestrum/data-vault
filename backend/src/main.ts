@@ -1,9 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Increase payload size limit to 50 MB (default is 100 KB)
+  app.use(express.json({ limit: '3mb' }));
+  app.use(express.urlencoded({ limit: '3mb', extended: true }));
 
   app.enableCors({
     origin: true,
