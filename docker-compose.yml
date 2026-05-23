@@ -29,6 +29,8 @@ services:
       ADMIN_BOOTSTRAP_LOG_PASSWORD: ${ADMIN_BOOTSTRAP_LOG_PASSWORD:-false}
     expose:
       - "3000"
+    ports:
+      - "3011:3000"
 
   frontend:
     build:
