@@ -65,6 +65,8 @@ export class RecordsTestComponent {
   resultJson = signal('');
   lastRequestJson = signal('');
   activeTab = signal<RecordsTestTab>('query');
+  showCurlModal = signal(false);
+  modalCurlCommand = signal('');
 
   constructor(
     private recordsApi: RecordsApiService,
@@ -555,7 +557,8 @@ export class RecordsTestComponent {
     const curlCommand = this.toCurlCommand(request);
 
     if (typeof navigator === 'undefined' || !navigator.clipboard) {
-      this.error.set('Clipboard API is not available in this browser.');
+      this.showCurlModal.set(true);
+      this.modalCurlCommand.set(curlCommand);
       return;
     }
 
@@ -566,8 +569,14 @@ export class RecordsTestComponent {
         this.message.set('Copied as cURL command.');
       })
       .catch(() => {
-        this.error.set('Could not copy cURL command to clipboard.');
+        this.showCurlModal.set(true);
+        this.modalCurlCommand.set(curlCommand);
       });
+  }
+
+  closeCurlModal(): void {
+    this.showCurlModal.set(false);
+    this.modalCurlCommand.set('');
   }
 
   private toCurlCommand(request: RequestPreview): string {

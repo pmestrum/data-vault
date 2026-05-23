@@ -235,3 +235,24 @@
   </div>
 }
 
+<!-- cURL Modal when clipboard is not available -->
+@if (showCurlModal()) {
+  <div class="modal-overlay" (click)="closeCurlModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>cURL Command</h2>
+        <button class="modal-close-btn" (click)="closeCurlModal()" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">Clipboard is not available. Copy the command from the textarea below:</p>
+        <textarea class="form-control font-mono modal-curl-textarea" rows="6" [value]="modalCurlCommand()" readonly></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary"
+                (click)="closeCurlModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+}
