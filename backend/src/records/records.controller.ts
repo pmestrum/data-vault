@@ -1,5 +1,6 @@
 import {
   Body,
+  Logger,
   Controller,
   Delete,
   Get,
@@ -23,11 +24,22 @@ import { Public } from '../auth/decorators/public.decorator';
 @UseGuards(ApiTokenGuard)
 @Controller('records')
 export class RecordsController {
+  private readonly logger = new Logger(RecordsController.name);
+
   constructor(private readonly recordsService: RecordsService) {}
 
   @Post()
   create(@Request() req: any, @Body() dto: CreateRecordDto) {
-    return this.recordsService.create(req.databaseId, dto);
+    const databaseId = req.databaseId;
+    this.logger.log(
+      `CREATE request | database: ${databaseId} | id: ${dto.id || '(auto)'} | tableId: ${dto.tableId} | createdBy: ${dto.createdBy}`,
+    );
+    return this.recordsService.create(databaseId, dto).catch((error) => {
+      this.logger.error(
+        `CREATE failed | database: ${databaseId} | id: ${dto.id || '(auto)'} | error: ${error?.message || String(error)}`,
+      );
+      throw error;
+    });
   }
 
   @Get()
