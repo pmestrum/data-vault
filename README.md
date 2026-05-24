@@ -49,6 +49,25 @@ To force regeneration of HTTPS certs on next startup:
 REGENERATE_HTTPS_CERTS=true docker compose up --build
 ```
 
+#### Custom domain names in the certificate
+
+If you access the app via a custom hostname (e.g. `datavault.home` from another machine on your network), **you must include that hostname in the certificate's Subject Alternative Names (SANs)**, otherwise clients will reject the cert with a domain mismatch error even if they trust it.
+
+Set these variables in your `.env` (or export them), then force regeneration:
+
+```bash
+# .env
+HTTPS_CERT_CN=datavault.home
+HTTPS_EXTRA_SANS=datavault.home,192.168.1.100   # comma-separated DNS names and/or IPs
+REGENERATE_HTTPS_CERTS=true
+```
+
+```bash
+docker compose up --build
+```
+
+The generated certificate will then be valid for `localhost`, `127.0.0.1`, and every entry in `HTTPS_EXTRA_SANS`.
+
 ### Option 1B: With Docker + hot reload/debug (dev)
 
 This mode keeps everything in Docker and gives you instant frontend/backend reloads while editing code.
@@ -182,6 +201,32 @@ Token rollover: after rotating a token, both the newly issued token and the imme
 | PUT | /records/:id | Replace a record by record `id` |
 | PATCH | /records/:id | Merge-update a record by record `id` |
 | DELETE | /records/:id | Delete a record by record `id` |
+
+### Certificates (public, no auth required)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | /certificates/server | Get full certificate and pinning information |
+| GET | /certificates/fingerprint | Get certificate fingerprint and pins |
+
+**Certificate pinning (for external apps):**
+
+External applications can use certificate pinning to securely verify the backend's identity without requiring browsers to trust the self-signed certificate.
+
+Getting the pins:
+```bash
+# Get full certificate and pins
+curl -k https://localhost:3011/certificates/server | jq
+
+# Or just the fingerprint  
+curl -k https://localhost:3011/certificates/fingerprint | jq
+```
+
+The certificate endpoints return:
+- **Certificate Pin**: SHA-256 of the DER-encoded certificate (changes when cert rotates)
+- **Public Key Pin**: SHA-256 of the DER-encoded public key (recommended, same across rotations)
+
+See **[Certificate Pinning Guide](./backend/src/certificate/CERTIFICATE_PINNING.md)** for detailed implementation examples in Node.js, Python, Go, and other languages.
 
 ### Record shape
 

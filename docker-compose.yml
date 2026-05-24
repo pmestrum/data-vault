@@ -31,6 +31,8 @@ services:
       HTTPS_CERT_DIR: /certs/backend
       HTTPS_CERT_FILE: cert.pem
       HTTPS_KEY_FILE: key.pem
+      HTTPS_CERT_CN: ${HTTPS_CERT_CN:-datavault.home}
+      HTTPS_EXTRA_SANS: ${HTTPS_EXTRA_SANS:-datavault.home}
       REGENERATE_HTTPS_CERTS: ${REGENERATE_HTTPS_CERTS:-false}
     volumes:
       - backend-certs:/certs/backend
@@ -52,6 +54,8 @@ services:
       HTTPS_CERT_DIR: /certs/frontend
       HTTPS_CERT_FILE: cert.pem
       HTTPS_KEY_FILE: key.pem
+      HTTPS_CERT_CN: ${HTTPS_CERT_CN:-datavault.home}
+      HTTPS_EXTRA_SANS: ${HTTPS_EXTRA_SANS:-datavault.home}
       REGENERATE_HTTPS_CERTS: ${REGENERATE_HTTPS_CERTS:-false}
     volumes:
       - frontend-certs:/certs/frontend
