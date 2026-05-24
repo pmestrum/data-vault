@@ -30,13 +30,23 @@ docker compose up --build
 
 App URLs:
 
-- UI: http://localhost:4200
-- API (through UI proxy): http://localhost:4200/api
+- UI: https://localhost:4200
+- API (through UI proxy): https://localhost:4200/api
+- Backend API (direct): https://localhost:3011
+
+The Docker setup auto-generates self-signed certificates for frontend and backend on first startup.
+Browsers and curl may warn because these certs are self-signed.
 
 To stop:
 
 ```bash
 docker compose down
+```
+
+To force regeneration of HTTPS certs on next startup:
+
+```bash
+REGENERATE_HTTPS_CERTS=true docker compose up --build
 ```
 
 ### Option 1B: With Docker + hot reload/debug (dev)
@@ -188,33 +198,33 @@ Token rollover: after rotating a token, both the newly issued token and the imme
 ### curl examples
 
 ```bash
-# Login
-TOKEN=$(curl -s -X POST http://localhost:4200/api/auth/login \
+# Login (self-signed cert: use -k)
+TOKEN=$(curl -k -s -X POST https://localhost:4200/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"<password>"}' | jq -r .access_token)
 
 # Create a database
-curl -X POST http://localhost:4200/api/apps \
+curl -k -X POST https://localhost:4200/api/apps \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"my-database"}'
 
 # Insert a record
-curl -X POST http://localhost:4200/api/records \
+curl -k -X POST https://localhost:4200/api/records \
   -H "x-api-token: <api-token>" \
   -H "x-database-id: <database-id>" \
   -H "Content-Type: application/json" \
   -d '{"tableId":"users","json":{"name":"Alice"},"createdBy":"service-x"}'
 
 # Query records by tableId
-curl "http://localhost:4200/api/records?tableId=users" \
+curl -k "https://localhost:4200/api/records?tableId=users" \
   -H "x-api-token: <api-token>" \
   -H "x-database-id: <database-id>"
 
 # Query with multi-field JSON filters + sorting
 FILTERS='[{"field":"json.status","op":"eq","value":"active"},{"field":"json.age","op":"gte","value":21}]'
 SORT='[{"field":"json.lastName","dir":"asc"},{"field":"createdAt","dir":"desc"}]'
-curl --get "http://localhost:4200/api/records" \
+curl -k --get "https://localhost:4200/api/records" \
   --data-urlencode "logic=and" \
   --data-urlencode "filters=$FILTERS" \
   --data-urlencode "sort=$SORT" \

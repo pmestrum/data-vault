@@ -27,6 +27,13 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
       ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
       ADMIN_BOOTSTRAP_LOG_PASSWORD: ${ADMIN_BOOTSTRAP_LOG_PASSWORD:-false}
+      HTTPS_ENABLED: "true"
+      HTTPS_CERT_DIR: /certs/backend
+      HTTPS_CERT_FILE: cert.pem
+      HTTPS_KEY_FILE: key.pem
+      REGENERATE_HTTPS_CERTS: ${REGENERATE_HTTPS_CERTS:-false}
+    volumes:
+      - backend-certs:/certs/backend
     expose:
       - "3000"
     ports:
@@ -41,11 +48,20 @@ services:
       - backend
     networks:
       - data-vault-net
+    environment:
+      HTTPS_CERT_DIR: /certs/frontend
+      HTTPS_CERT_FILE: cert.pem
+      HTTPS_KEY_FILE: key.pem
+      REGENERATE_HTTPS_CERTS: ${REGENERATE_HTTPS_CERTS:-false}
+    volumes:
+      - frontend-certs:/certs/frontend
     ports:
-      - "4200:80"
+      - "4200:443"
 
 volumes:
   mongo-data:
+  backend-certs:
+  frontend-certs:
 
 networks:
   data-vault-net:
