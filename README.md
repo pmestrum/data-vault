@@ -68,6 +68,45 @@ docker compose up --build
 
 The generated certificate will then be valid for `localhost`, `127.0.0.1`, and every entry in `HTTPS_EXTRA_SANS`.
 
+#### Using Let's Encrypt certificates (production domains only)
+
+For production environments with a **public domain**, you can use free Let's Encrypt certificates instead of self-signed:
+
+**Requirements:**
+- Valid public domain name resolvable from the internet
+- Port 80 (HTTP) must be accessible from the internet (needed for domain validation)
+- Email address for certificate expiry notifications
+
+**Setup:**
+
+1. Update `.env`:
+```bash
+LETSENCRYPT_ENABLED=true
+LETSENCRYPT_DOMAIN=datavault.example.com
+LETSENCRYPT_EMAIL=admin@example.com
+LETSENCRYPT_AGREE_TOS=true
+```
+
+2. Start Docker Compose:
+```bash
+docker compose up --build
+```
+
+The backend and frontend will automatically attempt to obtain Let's Encrypt certificates on first startup.
+
+**Important notes:**
+- Certificates are **free** and automatically renew every 60 days
+- Port 80 must remain open for renewal validation (happens every 12 hours)
+- If domain validation fails (e.g., private domain like `datavault.home`), the system automatically falls back to self-signed certificates
+- Let's Encrypt certificates are valid for 90 days
+- Production certificates are trusted by all modern browsers and clients
+
+**For local/internal domains:**
+- Let's Encrypt cannot validate private domains (like `datavault.home`)
+- Keep `LETSENCRYPT_ENABLED=false` (default)
+- Use self-signed certificates with custom SANs instead
+- For external app access, use certificate pinning (see [Certificate Pinning Guide](./backend/src/certificate/CERTIFICATE_PINNING.md))
+
 ### Option 1B: With Docker + hot reload/debug (dev)
 
 This mode keeps everything in Docker and gives you instant frontend/backend reloads while editing code.

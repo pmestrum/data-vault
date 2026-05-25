@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DatabasesModule } from './apps/databasesModule';
 import { RecordsModule } from './records/records.module';
+import { CertificateModule } from './certificate/certificate.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     AuthModule,
     DatabasesModule,
     RecordsModule,
+    CertificateModule,
   ],
   providers: [
     // Apply JWT guard globally; routes opt-out with @Public()

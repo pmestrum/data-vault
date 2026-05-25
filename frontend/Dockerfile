@@ -6,7 +6,7 @@ COPY . .
 RUN npm run build
 
 FROM nginx:alpine
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl certbot
 COPY --from=builder /app/dist/data-vault-frontend/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh

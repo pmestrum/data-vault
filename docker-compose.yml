@@ -34,8 +34,13 @@ services:
       HTTPS_CERT_CN: ${HTTPS_CERT_CN:-datavault.home}
       HTTPS_EXTRA_SANS: ${HTTPS_EXTRA_SANS:-datavault.home}
       REGENERATE_HTTPS_CERTS: ${REGENERATE_HTTPS_CERTS:-false}
+      LETSENCRYPT_ENABLED: ${LETSENCRYPT_ENABLED:-false}
+      LETSENCRYPT_DOMAIN: ${LETSENCRYPT_DOMAIN:-}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-}
+      LETSENCRYPT_AGREE_TOS: ${LETSENCRYPT_AGREE_TOS:-false}
     volumes:
       - backend-certs:/certs/backend
+      - letsencrypt:/etc/letsencrypt
     expose:
       - "3000"
     ports:
@@ -57,15 +62,30 @@ services:
       HTTPS_CERT_CN: ${HTTPS_CERT_CN:-datavault.home}
       HTTPS_EXTRA_SANS: ${HTTPS_EXTRA_SANS:-datavault.home}
       REGENERATE_HTTPS_CERTS: ${REGENERATE_HTTPS_CERTS:-false}
+      LETSENCRYPT_ENABLED: ${LETSENCRYPT_ENABLED:-false}
+      LETSENCRYPT_DOMAIN: ${LETSENCRYPT_DOMAIN:-}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-}
+      LETSENCRYPT_AGREE_TOS: ${LETSENCRYPT_AGREE_TOS:-false}
     volumes:
       - frontend-certs:/certs/frontend
+      - letsencrypt:/etc/letsencrypt
     ports:
       - "4200:443"
+
+  certbot-renewal:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet --non-interactive; sleep 12h & wait $${!}; done"
+    environment:
+      LETSENCRYPT_ENABLED: ${LETSENCRYPT_ENABLED:-false}
 
 volumes:
   mongo-data:
   backend-certs:
   frontend-certs:
+  letsencrypt:
 
 networks:
   data-vault-net:
